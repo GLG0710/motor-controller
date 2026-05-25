@@ -18,8 +18,8 @@ namespace {
 }
 
 
-// Funções get Data
-float getVoltage(uint8_t pin, InternalData& internal) {
+// Funções set Data (dependendo mudar nomes)
+float setVoltage(uint8_t pin, InternalData& internal) {
     int raw = analogRead(pin);
 
     internal.filtered = (internal.filtered*3 + raw*5) / 8;
@@ -27,7 +27,7 @@ float getVoltage(uint8_t pin, InternalData& internal) {
     return v_adc;
 }
 
-float getPct(float v, Throttle::Config& config) {
+float setPct(float v, Throttle::Config& config) {
     float pct = (v - config.voltageMin) / (config.voltageMax - config.voltageMin);
 
     if (!isfinite(pct))
@@ -36,24 +36,42 @@ float getPct(float v, Throttle::Config& config) {
     return constrain(pct, 0.0f, 1.0f) * 100.0f; // Valor percentual
 }
 
+void setData(Throttle::Data& data, Throttle::Config& config) {
+    float voltage = setVoltage(Pins::THROTTLE, internal);
+    
+    bool fault = (voltage < VOLTAGE_FAULT_LOW) || (voltage > VOLTAGE_FAULT_HIGH);
+    float pedalPct = fault ? 0.0f : setPct(voltage, config);
+    
+    data.volts = voltage;
+    data.pct = pedalPct;
+}
+
+
 namespace Throttle {
     Config config;
-    
+    Data data;
+
     void defaultValue() {
         config.voltageMin = VOLTAGE_MIN;
         config.voltageMax = VOLTAGE_MAX;
     }
 
-    Data getData() {
-        float voltage = getVoltage(Pins::THROTTLE, internal);
-        bool fault = (voltage < VOLTAGE_FAULT_LOW) || (voltage > VOLTAGE_FAULT_HIGH);
-
-        float pedalPct = fault ? 0.0f : getPct(voltage, config);
-
-        return {voltage,pedalPct};
+    void loop() {
+        setData(data, config);
     }
 
-    Config getConfig() {
-        return {config.voltageMin,config.voltageMax};
+    // Getters
+    float getVolts() {
+        return data.volts;
+    }
+    float getPct() {
+        return data.pct;
+    }
+
+    float getVoltageMin() {
+        return config.voltageMin;
+    }
+    float getVoltageMax() {
+        return config.voltageMax;
     }
 }

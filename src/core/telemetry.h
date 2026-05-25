@@ -29,7 +29,4 @@ namespace Telemetry {
 
         float maxPct = 0;
     };
-    extern Data data;
-
-    void getData();
 }

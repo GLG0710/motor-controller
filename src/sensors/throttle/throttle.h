@@ -7,7 +7,6 @@ namespace Throttle {
         float voltageMin;
         float voltageMax;
     };
-    extern Config config;
 
     struct Data {
         float volts;
@@ -15,6 +14,10 @@ namespace Throttle {
     };
 
     void defaultValue();
-    Data getData();
-    Config getConfig();
+    void loop();
+
+    float getVolts();
+    float getPct();
+    float getVoltageMin();
+    float getVoltageMax();
 }
